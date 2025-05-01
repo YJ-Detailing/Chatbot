@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fb;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .header {
+            padding: 20px;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-left: 10px;
+        }
+        
+        .logo {
+            font-size: 28px;
+        }
+        
+        .chat-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            margin: 8px 0;
+            border-radius: 18px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            position: relative;
+        }
+        
+        .bot-message {
+            background-color: #f0f2f5;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .user-message {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .input-area {
+            display: flex;
+            padding: 15px;
+            background-color: #f0f2f5;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        #user-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 20px;
+            outline: none;
+            font-size: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        #send-btn {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            margin-left: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+        
+        #send-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            background-color: #f0f2f5;
+            padding: 12px 16px;
+            border-radius: 18px;
+            border-bottom-left-radius: 5px;
+            margin: 8px 0;
+        }
+        
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #888;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: typing 1s infinite;
+        }
+        
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+            margin-right: 0;
+        }
+        
+        @keyframes typing {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+        
+        .suggestion-chips {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            gap: 8px;
+        }
+        
+        .suggestion-chip {
+            background-color: #e1e7f5;
+            color: #4a66b7;
+            padding: 8px 14px;
+            border-radius: 16px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .suggestion-chip:hover {
+            background-color: #d0d9ef;
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 20px;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🤖</div>
+            <h1>AI Assistant</h1>
+        </div>
+        <div class="chat-area" id="chat-area">
+            <div class="message bot-message">
+                Hello! I'm your AI assistant. I can answer questions about almost any topic and solve math problems. How can I help you today?
+            </div>
+            <div class="suggestion-chips">
+                <div class="suggestion-chip">Tell me a joke</div>
+                <div class="suggestion-chip">What can you do?</div>
+                <div class="suggestion-chip">Tell me about AI</div>
+                <div class="suggestion-chip">Solve 25*36-12</div>
+            </div>
+        </div>
+        <div class="typing-indicator" id="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Type your message here..." autocomplete="off">
+            <button id="send-btn">➤</button>
+        </div>
+    </div>
+
+    <script>
+        // Store chat functionality
+        const chatbot = {
+            // Knowledge base for responses
+            responses: {
+                greeting: [
+                    "Hello! How can I assist you today?",
+                    "Hi there! What can I help you with?",
+                    "Greetings! How may I be of service?"
+                ],
+                farewell: [
+                    "Goodbye! Have a great day!",
+                    "Farewell! Feel free to chat again anytime.",
+                    "Take care! Come back if you need anything else."
+                ],
+                thanks: [
+                    "You're welcome!",
+                    "Happy to help!",
+                    "Anytime! That's what I'm here for."
+                ],
+                unknown: [
+                    "I'm not sure I understand. Could you rephrase that?",
+                    "I don't have an answer for that yet. Is there something else I can help with?",
+                    "I'm still learning. Could you try asking in a different way?"
+                ],
+                joke: [
+                    "Why don't scientists trust atoms? Because they make up everything!",
+                    "What did the ocean say to the beach? Nothing, it just waved!",
+                    "Why did the scarecrow win an award? Because he was outstanding in his field!",
+                    "How does a penguin build its house? Igloos it together!",
+                    "What do you call a fake noodle? An impasta!",
+                    "Why did the math book look sad? Because it had too many problems.",
+                    "What's orange and sounds like a parrot? A carrot!"
+                ],
+                capabilities: [
+                    "I can answer questions about science, history, technology, geography, solve math problems, tell jokes, provide the current time, and have a friendly conversation with you. What would you like to know?"
+                ]
+            },
+            
+            // Function to get a random response from a category
+            getRandomResponse(category) {
+                const responses = this.responses[category] || this.responses.unknown;
+                return responses[Math.floor(Math.random() * responses.length)];
+            },
+            
+            // Knowledge database for various topics
+            knowledgeBase: {
+                science: {
+                    "solar system": "The solar system consists of the Sun and everything that orbits around it, including eight planets (Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, and Neptune), dwarf planets, moons, asteroids, comets, and more.",
+                    "gravity": "Gravity is a fundamental force that attracts objects with mass toward each other. On Earth, gravity gives weight to objects and causes them to fall when dropped.",
+                    "photosynthesis": "Photosynthesis is the process by which green plants and some other organisms use sunlight to synthesize nutrients from carbon dioxide and water, generating oxygen as a byproduct.",
+                    "dna": "DNA (deoxyribonucleic acid) is a molecule that carries genetic instructions for the development, functioning, growth and reproduction of all known organisms.",
+                    "climate change": "Climate change refers to long-term shifts in temperatures and weather patterns, primarily caused by human activities, especially the burning of fossil fuels which increases heat-trapping greenhouse gases.",
+                    "atom": "An atom is the smallest unit of ordinary matter that forms a chemical element, consisting of a nucleus containing protons and neutrons, surrounded by electrons."
+                },
+                history: {
+                    "world war 2": "World War II was a global war that lasted from 1939 to 1945, involving many of the world's nations forming two opposing military alliances: the Allies and the Axis.",
+                    "industrial revolution": "The Industrial Revolution was a period of major industrialization and innovation that took place during the late 1700s and early 1800s, transforming largely rural, agrarian societies into industrialized, urban ones.",
+                    "ancient egypt": "Ancient Egypt was a civilization in Northeast Africa concentrated along the lower Nile River. Egyptian civilization coalesced around 3100 BCE and lasted as a leading cultural force for thousands of years.",
+                    "renaissance": "The Renaissance was a period in European history marking the transition from the Middle Ages to modernity, spanning the 14th to the 17th century, characterized by an emphasis on learning, art, and humanism."
+                },
+                technology: {
+                    "internet": "The Internet is a global system of interconnected computer networks that use the standard Internet protocol suite (TCP/IP) to link devices worldwide.",
+                    "artificial intelligence": "Artificial intelligence (AI) is intelligence demonstrated by machines, as opposed to natural intelligence displayed by humans or animals. AI enables machines to learn from experience, adjust to new inputs, and perform tasks that typically require human intelligence.",
+                    "blockchain": "Blockchain is a distributed ledger technology that allows data to be stored globally on thousands of servers while allowing anyone on the network to see entries in real time. It's the underlying technology behind cryptocurrencies like Bitcoin.",
+                    "virtual reality": "Virtual reality (VR) is a simulated experience that can be similar to or completely different from the real world. It typically uses special electronic equipment, such as a helmet with a screen or gloves with sensors."
+                },
+                geography: {
+                    "continents": "There are seven continents on Earth: Asia, Africa, North America, South America, Antarctica, Europe, and Australia/Oceania.",
+                    "ocean": "The five main oceans on Earth are the Pacific Ocean, Atlantic Ocean, Indian Ocean, Southern Ocean, and Arctic Ocean.",
+                    "mount everest": "Mount Everest is Earth's highest mountain above sea level, located in the Mahalangur Himal sub-range of the Himalayas on the border between Nepal and China. Its elevation is 29,032 feet (8,848.86 meters).",
+                    "amazon rainforest": "The Amazon Rainforest is the world's largest tropical rainforest, covering much of northwestern Brazil and extending into Colombia, Peru, and other South American countries."
+                }
+            },
+            
+            // Enhanced math parser using a separate function for safety and broader capabilities
+            solveMathProblem(expression) {
+                try {
+                    // Pre-process the expression to handle word-based math
+                    expression = expression.replace(/divided by|divded by|divid by/gi, '/');
+                    expression = expression.replace(/times|multiplied by/gi, '*');
+                    expression = expression.replace(/plus/gi, '+');
+                    expression = expression.replace(/minus/gi, '-');
+                    expression = expression.replace(/squared/gi, '^2');
+                    expression = expression.replace(/cubed/gi, '^3');
+                    
+                    // Clean and prepare the expression
+                    let cleanExpression = expression
+                        .replace(/[^0-9+\-*/().^√πe\s]/g, '')  // Allow basic math symbols
+                        .replace(/\^/g, '**')                 // Convert ^ to ** for exponents
+                        .replace(/π/g, 'Math.PI')             // Replace π with Math.PI
+                        .replace(/e/g, 'Math.E')              // Replace e with Math.E
+                        .replace(/√(\d+)/g, 'Math.sqrt($1)'); // Convert square roots
+                    
+                    // Add support for common math functions
+                    if (expression.includes('sin')) cleanExpression = cleanExpression.replace(/sin/g, 'Math.sin');
+                    if (expression.includes('cos')) cleanExpression = cleanExpression.replace(/cos/g, 'Math.cos');
+                    if (expression.includes('tan')) cleanExpression = cleanExpression.replace(/tan/g, 'Math.tan');
+                    if (expression.includes('log')) cleanExpression = cleanExpression.replace(/log/g, 'Math.log10');
+                    if (expression.includes('ln')) cleanExpression = cleanExpression.replace(/ln/g, 'Math.log');
+                    if (expression.includes('abs')) cleanExpression = cleanExpression.replace(/abs/g, 'Math.abs');
+                    if (expression.includes('sqrt')) cleanExpression = cleanExpression.replace(/sqrt/g, 'Math.sqrt');
+                    
+                    // Calculate the result
+                    const result = eval(cleanExpression);
+                    
+                    // Format the result
+                    if (Number.isInteger(result)) {
+                        return result.toString();
+                    } else {
+                        return parseFloat(result.toFixed(6)).toString();
+                    }
+                } catch (e) {
+                    return null; // Return null if calculation fails
+                }
+            },
+            
+            // Helper function to calculate string similarity (Levenshtein distance)
+            calculateStringSimilarity(str1, str2) {
+                // If the strings are equal, similarity is 1
+                if (str1 === str2) return 1;
+                
+                // If either string is empty, similarity is 0
+                if (str1.length === 0 || str2.length === 0) return 0;
+                
+                // Calculate Levenshtein distance matrix
+                const matrix = Array(str1.length + 1).fill().map(() => Array(str2.length + 1).fill(0));
+                
+                // Initialize first row and column
+                for (let i = 0; i <= str1.length; i++) matrix[i][0] = i;
+                for (let j = 0; j <= str2.length; j++) matrix[0][j] = j;
+                
+                // Fill the matrix
+                for (let i = 1; i <= str1.length; i++) {
+                    for (let j = 1; j <= str2.length; j++) {
+                        const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j] + 1,      // deletion
+                            matrix[i][j - 1] + 1,      // insertion
+                            matrix[i - 1][j - 1] + cost // substitution
+                        );
+                    }
+                }
+                
+                // Calculate normalized similarity (0-1)
+                const distance = matrix[str1.length][str2.length];
+                const maxLength = Math.max(str1.length, str2.length);
+                return 1 - (distance / maxLength);
+            },
+            
+            // Function to find the closest match in our knowledge base
+            findClosestMatch(query, threshold = 0.7) {
+                let bestMatch = null;
+                let highestSimilarity = 0;
+                
+                // Check for common typos in commands
+                const commandTypos = {
+                    'joke': ['jok', 'jike', 'jokw', 'joek', 'jokr', 'jooke'],
+                    'hello': ['helo', 'hallo', 'helo', 'heloo', 'helli', 'hi'],
+                    'goodbye': ['goodby', 'godbye', 'goodby', 'gooodbye', 'goodbai', 'bye'],
+                    'thanks': ['thank', 'thnks', 'thnx', 'thanx', 'ty', 'thankyou', 'thanku'],
+                    'weather': ['wether', 'wheather', 'weathr', 'wheter', 'weathe'],
+                    'time': ['tim', 'tme', 'timee', 'tiime'],
+                    'calculate': ['calculat', 'calcuate', 'calcute', 'calclate', 'caculate', 'compute', 'solve']
+                };
+                
+                // Check command typos first
+                for (const [command, typos] of Object.entries(commandTypos)) {
+                    if (typos.includes(query) || query.includes(command)) {
+                        return command;
+                    }
+                }
+                
+                // Search through all topics in knowledge base
+                for (let category in this.knowledgeBase) {
+                    for (let topic in this.knowledgeBase[category]) {
+                        // Calculate similarity between query and each topic
+                        const similarity = this.calculateStringSimilarity(query, topic);
+                        
+                        // Update best match if this is better
+                        if (similarity > highestSimilarity && similarity >= threshold) {
+                            highestSimilarity = similarity;
+                            bestMatch = topic;
+                        }
+                        
+                        // Also check for partial matches (if the topic contains the query or vice versa)
+                        if (topic.includes(query) || query.includes(topic)) {
+                            const partialSimilarity = Math.min(query.length, topic.length) / Math.max(query.length, topic.length);
+                            if (partialSimilarity > highestSimilarity && partialSimilarity >= threshold) {
+                                highestSimilarity = partialSimilarity;
+                                bestMatch = topic;
+                            }
+                        }
+                    }
+                }
+                
+                return bestMatch;
+            },
+            
+            // Process user input and generate a response
+            processInput(input) {
+                input = input.toLowerCase().trim();
+                const originalInput = input; // Keep original for display purposes
+                
+                // Handle common misspellings of commands
+                if (input.match(/^(hello|hi|hey|helo|hallo|heloo|helli).*/)) {
+                    return this.getRandomResponse("greeting");
+                } 
+                else if (input.match(/.*(bye|goodbye|farewell|goodby|gooodbye|godbye).*/)) {
+                    return this.getRandomResponse("farewell");
+                }
+                else if (input.match(/.*(thank|thanks|thnx|thanx|thankyou|thanku).*/)) {
+                    return this.getRandomResponse("thanks");
+                }
+                else if (input.match(/.*(joke|jok|joek|jike|jokw|jokr|funny|make me laugh).*/)) {
+                    return this.getRandomResponse("joke");
+                }
+                else if (input.match(/.*(can you do|capabilities|features|what can you do).*/)) {
+                    return this.getRandomResponse("capabilities");
+                }
+                else if (input.match(/what is (the )?time|what time is it|current time|tim[e]*/)) {
+                    return `The current time is ${new Date().toLocaleTimeString()}.`;
+                }
+                else if (input.match(/what is today|what day is it|current date|date today/)) {
+                    return `Today is ${new Date().toLocaleDateString()}.`;
+                }
+                
+                // Check for math problems - look for numbers and math operators
+                if (input.match(/[-+*/().\d^√πe]/) || 
+                    input.match(/(solve|calculate|compute|evaluate|what is|find|sin|cos|tan|log|sqrt|calc)/)) {
+                    // Extract the math expression
+                    let mathExpression = input
+                        .replace(/(solve|calculate|compute|evaluate|what is|equals|find|the result of|calc)/gi, '')
+                        .trim();
+                    
+                    const result = this.solveMathProblem(mathExpression);
+                    if (result !== null) {
+                        return `The result of ${mathExpression} is ${result}.`;
+                    }
+                }
+                
+                // Check for knowledge base inquiries - with spelling tolerance
+                // Split the input into words to find potential topics
+                const words = input.split(/\s+/);
+                
+                // Try multi-word combinations first
+                for (let i = 0; i < words.length; i++) {
+                    for (let j = i + 1; j <= Math.min(i + 4, words.length); j++) {
+                        const phrase = words.slice(i, j).join(' ');
+                        const closestMatch = this.findClosestMatch(phrase);
+                        
+                        if (closestMatch) {
+                            // Find which category the match belongs to
+                            for (let category in this.knowledgeBase) {
+                                if (this.knowledgeBase[category][closestMatch]) {
+                                    return this.knowledgeBase[category][closestMatch];
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Then try individual words if no phrase match
+                for (let word of words) {
+                    if (word.length < 3) continue; // Skip very short words
+                    
+                    const closestMatch = this.findClosestMatch(word);
+                    if (closestMatch) {
+                        // Find which category the match belongs to
+                        for (let category in this.knowledgeBase) {
+                            if (this.knowledgeBase[category][closestMatch]) {
+                                return this.knowledgeBase[category][closestMatch];
+                            }
+                        }
+                    }
+                }
+                
+                // Check for "what is X" or "tell me about X" type questions with spell tolerance
+                if (input.match(/what is|who is|tell me about|explain|describe|define/)) {
+                    const topic = input
+                        .replace(/what is|who is|tell me about|explain|describe|define/gi, '')
+                        .trim()
+                        .replace(/[?.,]/g, '');
+                    
+                    // Try to find a close match in our knowledge base
+                    const closestMatch = this.findClosestMatch(topic, 0.6); // Lower threshold for question matches
+                    
+                    if (closestMatch) {
+                        // Find which category the match belongs to
+                        for (let category in this.knowledgeBase) {
+                            if (this.knowledgeBase[category][closestMatch]) {
+                                return this.knowledgeBase[category][closestMatch];
+                            }
+                        }
+                    }
+                    
+                    // Generic responses for topics we don't have in our knowledge base
+                    const genericResponses = [
+                        `${topic.charAt(0).toUpperCase() + topic.slice(1)} is an interesting topic. While I don't have comprehensive information, I can tell you it's a subject worth exploring further.`,
+                        `I don't have detailed information about ${topic}, but I'd be happy to discuss what aspects you're interested in.`,
+                        `${topic.charAt(0).toUpperCase() + topic.slice(1)} is something many people ask about. Could you specify what aspect you're most interested in?`
+                    ];
+                    
+                    return genericResponses[Math.floor(Math.random() * genericResponses.length)];
+                }
+                
+                // For weather questions with spelling tolerance
+                if (input.match(/.*(weather|forecast|temperature|wheather|wether|weathr).*/)) {
+                    return "I don't have access to real-time weather data, but you can check a weather service like weather.com or accuweather.com for current conditions.";
+                }
+                
+                // Try to generate a more contextual response
+                if (input.length < 5) {
+                    return "Could you provide more details or ask a complete question?";
+                }
+                
+                // Default response if no patterns match
+                return this.getRandomResponse("unknown");
+            }
+        };
+
+        // DOM elements
+        const chatArea = document.getElementById('chat-area');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-btn');
+        const typingIndicator = document.getElementById('typing-indicator');
+
+        // Add event listeners
+        sendButton.addEventListener('click', handleUserInput);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleUserInput();
+            }
+        });
+
+        // Setup suggestion chips
+        document.querySelectorAll('.suggestion-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                userInput.value = chip.textContent;
+                handleUserInput();
+            });
+        });
+
+        // Function to handle user input
+        function handleUserInput() {
+            const message = userInput.value.trim();
+            if (!message) return;
+            
+            // Add user message to chat
+            addMessage(message, 'user');
+            userInput.value = '';
+            
+            // Show typing indicator
+            typingIndicator.style.display = 'block';
+            chatArea.scrollTop = chatArea.scrollHeight;
+            
+            // Process after a small delay to simulate thinking
+            setTimeout(() => {
+                const response = chatbot.processInput(message);
+                typingIndicator.style.display = 'none';
+                addMessage(response, 'bot');
+                
+                // Add contextual suggestions based on the last exchange
+                addSuggestions(message, response);
+            }, 1000 + Math.random() * 1000); // Random delay between 1-2 seconds
+        }
+
+        // Function to add a message to the chat area
+        function addMessage(message, sender) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.classList.add(sender + '-message');
+            messageElement.textContent = message;
+            
+            chatArea.appendChild(messageElement);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        // Function to generate contextual suggestions
+        function addSuggestions(userMessage, botResponse) {
+            // Remove previous suggestions
+            const oldSuggestions = document.querySelector('.suggestion-chips');
+            if (oldSuggestions) {
+                oldSuggestions.remove();
+            }
+            
+            // Generate new suggestions based on context
+            const suggestions = [];
+            
+            if (botResponse.includes("joke")) {
+                suggestions.push("Tell me another joke");
+            }
+            
+            if (userMessage.toLowerCase().includes("math") || botResponse.includes("result of")) {
+                suggestions.push("Solve 123+456");
+                suggestions.push("Calculate 15^2");
+            }
+            
+            if (userMessage.toLowerCase().includes("science") || 
+                userMessage.toLowerCase().includes("history") || 
+                userMessage.toLowerCase().includes("geography")) {
+                suggestions.push("Tell me about climate change");
+                suggestions.push("What is the solar system?");
+            }
+            
+            // Always add some generic options if we don't have enough suggestions
+            if (suggestions.length < 3) {
+                if (!suggestions.includes("Tell me a joke") && !botResponse.includes("joke")) {
+                    suggestions.push("Tell me a joke");
+                }
+                
+                if (!suggestions.includes("What can you do?")) {
+                    suggestions.push("What can you do?");
+                }
+                
+                if (suggestions.length < 3) {
+                    const topics = ["artificial intelligence", "solar system", "gravity", "world war 2", "internet"];
+                    const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+                    suggestions.push(`Tell me about ${randomTopic}`);
+                }
+            }
+            
+            // Create suggestion chips
+            const chipsContainer = document.createElement('div');
+            chipsContainer.classList.add('suggestion-chips');
+            
+            suggestions.forEach(text => {
+                const chip = document.createElement('div');
+                chip.classList.add('suggestion-chip');
+                chip.textContent = text;
+                chip.addEventListener('click', () => {
+                    userInput.value = text;
+                    handleUserInput();
+                });
+                chipsContainer.appendChild(chip);
+            });
+            
+            chatArea.appendChild(chipsContainer);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+    </script>
+</body>
+</html>
